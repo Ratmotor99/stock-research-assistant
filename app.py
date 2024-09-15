@@ -73,30 +73,35 @@ st.dataframe(stock_data_df, width=1200)
 selected_stocks = st.multiselect(
     "Select stocks/ETFs to display charts",
     options=stock_data_df['Symbol'].tolist(),  # Use the symbols from the dataframe
-    default=stock_data_df['Symbol'].tolist()[:5]  # Preselect the first 5 stocks
+    default=[]  # No stocks selected by default
 )
 
-# Create a selectbox for the time range of the charts
-time_period = st.selectbox(
-    "Select time range for stock price charts",
-    options=["1mo", "3mo", "6mo", "1y", "5y", "max"],
-    index=3  # Default to "1y" (1 year)
-)
+# If no stocks are selected, don't display any chart
+if selected_stocks:
+    # Create a selectbox for the time range of the charts
+    time_period = st.selectbox(
+        "Select time range for stock price charts",
+        options=["1mo", "3mo", "6mo", "1y", "5y", "max"],
+        index=3  # Default to "1y" (1 year)
+    )
 
-# Display line charts only for the selected stocks/ETFs
-st.write(f"### Stock Price Trends for {time_period} Period")
-for symbol in selected_stocks:
-    stock = yf.Ticker(symbol)
-    
-    # Error handling: Check if stock data is available
-    try:
-        stock_data = stock.history(period=time_period)  # Fetch data for the selected time period
-        if not stock_data.empty:
-            # Display the line chart for the stock's closing prices
-            st.write(f"### {symbol} Price Chart ({time_period})")
-            st.line_chart(stock_data['Close'])  # Line chart of closing prices
-        else:
-            st.write(f"### {symbol}: No data available for price chart.")
-    except Exception as e:
-        st.write(f"Error fetching data for {symbol}: {e}")
+    # Display line charts only for the selected stocks/ETFs
+    st.write(f"### Stock Price Trends for {time_period} Period")
+    for symbol in selected_stocks:
+        stock = yf.Ticker(symbol)
+        
+        # Error handling: Check if stock data is available
+        try:
+            stock_data = stock.history(period=time_period)  # Fetch data for the selected time period
+            if not stock_data.empty:
+                # Display the line chart for the stock's closing prices
+                st.write(f"### {symbol} Price Chart ({time_period})")
+                st.line_chart(stock_data['Close'])  # Line chart of closing prices
+            else:
+                st.write(f"### {symbol}: No data available for price chart.")
+        except Exception as e:
+            st.write(f"Error fetching data for {symbol}: {e}")
+else:
+    st.write("Select stocks from the table to display charts.")
+
 
