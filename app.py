@@ -1,59 +1,75 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder
 
-# Set up the Streamlit app title
-st.title("Stock Research Assistant")
+# Set the page title
+st.title("Top Dividend Stock Selector")
 
-# Sample stock symbols (you can replace these with any other stocks)
-symbols = ['AAPL', 'MSFT', 'GOOG', 'AMZN', 'TSLA']
+# Step 1: Fetch S&P 500 stock symbols from Wikipedia
+@st.cache
+def get_sp500_stocks():
+    url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+    sp500_table = pd.read_html(url, header=0)[0]
+    return sp500_table['Symbol'].tolist()
 
-# Create an empty list to store stock data
+sp500_stocks = get_sp500_stocks()
+
+# Step 2: Predefined ETF symbols
+etfs = ['SPY', 'IVV', 'VOO', 'QQQ', 'DIA', 'IWM', 'XLF', 'XLK', 'VTI', 'AGG']  # This can be expanded
+
+# Step 3: Add checkboxes for S&P 500 and ETFs
+include_sp500 = st.checkbox("Include S&P 500 Stocks", value=True)
+include_etfs = st.checkbox("Include ETFs", value=True)
+
+# Step 4: Create a combined stock list based on user selection
+stock_list = []
+if include_sp500:
+    stock_list.extend(sp500_stocks)
+if include_etfs:
+    stock_list.extend(etfs)
+
+# Step 5: Input for selecting the number of top dividend stocks to display
+num_top_stocks = st.number_input("How many top dividend stocks to display?", min_value=1, max_value=len(stock_list), value=5)
+
+# Fetch stock data and store in a list
 stock_data_list = []
 
-# Fetch stock data for each symbol
-for symbol in symbols:
-    stock = yf.Ticker(symbol)
-    info = stock.info
-    
-    # Extract relevant stock data (price, P/E ratio, market cap, etc.)
-    stock_data = {
-        'Symbol': symbol,
-        'Price': info.get('currentPrice', 'N/A'),
-        'Market Cap': info.get('marketCap', 'N/A'),
-        'P/E Ratio': info.get('trailingPE', 'N/A'),
-        'Dividend Yield': info.get('dividendYield', 'N/A'),
-        '52-Week High': info.get('fiftyTwoWeekHigh', 'N/A'),
-        '52-Week Low': info.get('fiftyTwoWeekLow', 'N/A')
-    }
-    
-    stock_data_list.append(stock_data)
+if stock_list:
+    for symbol in stock_list:
+        stock = yf.Ticker(symbol)
+        info = stock.info
 
-# Convert stock data list to DataFrame
+        # Check if the stock pays dividends (non-zero dividend yield)
+        dividend_yield = info.get('dividendYield', 0)
+        
+        if dividend_yield:  # Only include stocks with non-zero dividend yield
+            # Add stock data to the list
+            stock_data = {
+                'Symbol': symbol,
+                'Price': info.get('currentPrice', 'N/A'),
+                'Dividend Yield': dividend_yield,
+                'Dividend per Share': info.get('dividendRate', 'N/A')
+            }
+            
+            stock_data_list.append(stock_data)
+
+# Convert to DataFrame
 stock_data_df = pd.DataFrame(stock_data_list)
 
-# Create Ag-Grid settings to make the table interactive
-gb = GridOptionsBuilder.from_dataframe(stock_data_df)
-gb.configure_selection('single')  # Enable single-row selection
-grid_options = gb.build()
+# Sort by dividend yield (highest to lowest)
+sorted_stocks = stock_data_df.sort_values(by='Dividend Yield', ascending=False)
 
-# Display the stock data table using Ag-Grid
-st.write("### Stock Data Table (Click to select a stock)")
-grid_response = AgGrid(stock_data_df, gridOptions=grid_options)
+# Step 6: Display the top N dividend stocks as specified by the user
+top_stocks = sorted_stocks.head(num_top_stocks)
 
-# Get the selected row from the table
-selected_row = grid_response['selected_rows'] if grid_response else None
+st.write(f"### Top {num_top_stocks} Dividend Stocks")
+st.dataframe(top_stocks[['Symbol', 'Price', 'Dividend Yield', 'Dividend per Share']])
 
-# Check if any row is selected and handle NoneType
-if selected_row and len(selected_row) > 0:
-    selected_symbol = selected_row[0]['Symbol']
-    
-    # Fetch and display the chart for the selected stock
-    stock = yf.Ticker(selected_symbol)
-    stock_data = stock.history(period='1y')  # Fetch 1-year data
-    
-    st.write(f"### {selected_symbol} Price Chart")
+# Step 7: Display the chart for each selected stock
+for index, row in top_stocks.iterrows():
+    symbol = row['Symbol']
+    stock = yf.Ticker(symbol)
+    stock_data = stock.history(period='1y')
+
+    st.write(f"### {symbol} Price Chart")
     st.line_chart(stock_data['Close'])
-else:
-    st.write("No stock selected.")
