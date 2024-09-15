@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 # Set page layout to wide to make more room for the table
 st.set_page_config(layout="wide")
@@ -10,7 +11,7 @@ st.set_page_config(layout="wide")
 st.title("Stock Research Assistant")
 
 # Fetch S&P 500 stock symbols from Wikipedia
-@st.cache  # Cache the result to avoid reloading on every run
+@st.cache
 def get_sp500_stocks():
     url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
     sp500_table = pd.read_html(url, header=0)[0]
@@ -31,10 +32,8 @@ initial_stocks = all_stocks[:10]
 show_all = st.checkbox("Show all S&P 500 and ETF symbols")
 
 if show_all:
-    # If checkbox is selected, show all stocks and ETFs
     stock_list = all_stocks
 else:
-    # Otherwise, show only the first 10 stocks
     stock_list = initial_stocks
 
 # Create an empty list to hold stock data
@@ -65,43 +64,35 @@ for symbol in stock_list:
 # Convert the list of dictionaries into a DataFrame
 stock_data_df = pd.DataFrame(stock_data_list)
 
-# Display the stock data as a wider table
-st.write("### Stock Data")
-st.dataframe(stock_data_df, width=1200)
+# Create interactive Ag-Grid table
+gb = GridOptionsBuilder.from_dataframe(stock_data_df)
+gb.configure_selection('single')  # Enable row selection
+grid_options = gb.build()
 
-# Multiselect to let users choose specific stocks for chart display
-selected_stocks = st.multiselect(
-    "Select stocks/ETFs to display charts",
-    options=stock_data_df['Symbol'].tolist(),  # Use the symbols from the dataframe
-    default=[]  # No stocks selected by default
-)
+st.write("### Stock Data (click to select a stock)")
+grid_response = AgGrid(stock_data_df, gridOptions=grid_options)
 
-# If no stocks are selected, don't display any chart
-if selected_stocks:
-    # Create a selectbox for the time range of the charts
+# Get the selected stock from the Ag-Grid
+selected_row = grid_response['selected_rows']
+
+if selected_row:
+    selected_symbol = selected_row[0]['Symbol']
+    
+    # Display selected stock's chart
+    stock = yf.Ticker(selected_symbol)
+    
     time_period = st.selectbox(
-        "Select time range for stock price charts",
+        "Select time range for stock price chart",
         options=["1mo", "3mo", "6mo", "1y", "5y", "max"],
         index=3  # Default to "1y" (1 year)
     )
-
-    # Dynamically add the charts for each selected stock at the bottom
-    st.write(f"### Stock Price Trends for {time_period} Period")
-    for symbol in selected_stocks:
-        stock = yf.Ticker(symbol)
-        
-        # Error handling: Check if stock data is available
-        try:
-            stock_data = stock.history(period=time_period)  # Fetch data for the selected time period
-            if not stock_data.empty:
-                # Display the line chart for the stock's closing prices
-                st.write(f"### {symbol} Price Chart ({time_period})")
-                st.line_chart(stock_data['Close'])  # Line chart of closing prices
-            else:
-                st.write(f"### {symbol}: No data available for price chart.")
-        except Exception as e:
-            st.write(f"Error fetching data for {symbol}: {e}")
-else:
-    st.write("Select stocks from the table to display charts.")
-
-
+    
+    try:
+        stock_data = stock.history(period=time_period)
+        if not stock_data.empty:
+            st.write(f"### {selected_symbol} Price Chart ({time_period})")
+            st.line_chart(stock_data['Close'])  # Line chart of closing prices
+        else:
+            st.write(f"### {selected_symbol}: No data available for price chart.")
+    except Exception as e:
+        st.write(f"Error fetching data for {selected_symbol}: {e}")
