@@ -1,4 +1,3 @@
-
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -20,17 +19,17 @@ for symbol in stock_list:
     stock = yf.Ticker(symbol)
     info = stock.info
     
-    # Store relevant data: Stock symbol, price, dividend yield, dividend per share
+    # Store relevant data: Stock symbol, price, dividend yield, dividend per share, market cap, P/E ratio, 52-week high/low
     stock_data = {
-    'Symbol': symbol,
-    'Price': info.get('regularMarketPrice', 'N/A'),
-    'Dividend Yield': info.get('dividendYield', 'N/A'),
-    'Dividend per Share': info.get('dividendRate', 'N/A'),
-    'Market Cap': info.get('marketCap', 'N/A'),
-    'P/E Ratio': info.get('trailingPE', 'N/A'),
-    '52-Week High': info.get('fiftyTwoWeekHigh', 'N/A'),
-    '52-Week Low': info.get('fiftyTwoWeekLow', 'N/A')
-}
+        'Symbol': symbol,
+        'Price': info.get('regularMarketPrice', 'N/A'),
+        'Dividend Yield': info.get('dividendYield', 'N/A'),
+        'Dividend per Share': info.get('dividendRate', 'N/A'),
+        'Market Cap': info.get('marketCap', 'N/A'),
+        'P/E Ratio': info.get('trailingPE', 'N/A'),
+        '52-Week High': info.get('fiftyTwoWeekHigh', 'N/A'),
+        '52-Week Low': info.get('fiftyTwoWeekLow', 'N/A')
+    }
     
     stock_data_list.append(stock_data)
 
