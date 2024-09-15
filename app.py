@@ -44,9 +44,16 @@ stock_data_df = pd.DataFrame(stock_data_list)
 st.write("### Stock Data")
 st.dataframe(stock_data_df)
 
-# Add a line chart for each stock's price history (last year)
+# Create a multiselect box to let users choose which stocks they want to display charts for
+selected_stocks = st.multiselect(
+    "Select stocks to display charts",
+    options=stock_list,
+    default=stock_list  # Pre-select all stocks initially
+)
+
+# Display line charts only for the selected stocks
 st.write("### Stock Price Trends")
-for symbol in stock_list:
+for symbol in selected_stocks:
     stock = yf.Ticker(symbol)
     
     # Error handling: Check if stock data is available
