@@ -20,12 +20,8 @@ for symbol in stock_list:
     stock = yf.Ticker(symbol)
     info = stock.info
     
-    # Debugging: Print raw stock data to identify the fields (optional)
-    # st.write(f"Raw data for {symbol}:")
-    # st.write(info)  # Uncomment this if you need to see the raw data
-    
     # Use 'currentPrice' as the stock price field
-    price = info.get('currentPrice', np.nan)  # Fallback to np.nan if 'currentPrice' is not available
+    price = info.get('currentPrice', np.nan)
     
     # Store relevant data: Stock symbol, price, dividend yield, dividend per share, market cap, P/E ratio, 52-week high/low
     stock_data = {
@@ -41,9 +37,4 @@ for symbol in stock_list:
     
     stock_data_list.append(stock_data)
 
-# Convert the list of dictionaries into a DataFrame
-stock_data_df = pd.DataFrame(stock_data_list)
-
-# Display the stock data as a table in Streamlit
-st.write("### Stock Data")
-st.dataframe(stock_data_df)
+# Convert the
