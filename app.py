@@ -37,4 +37,26 @@ for symbol in stock_list:
     
     stock_data_list.append(stock_data)
 
-# Convert the
+# Convert the list of dictionaries into a DataFrame
+stock_data_df = pd.DataFrame(stock_data_list)
+
+# Display the stock data as a table in Streamlit
+st.write("### Stock Data")
+st.dataframe(stock_data_df)
+
+# Add a line chart for each stock's price history (last year)
+st.write("### Stock Price Trends")
+for symbol in stock_list:
+    stock = yf.Ticker(symbol)
+    
+    # Error handling: Check if stock data is available
+    try:
+        stock_data = stock.history(period="1y")  # Fetch 1 year of data
+        if not stock_data.empty:
+            # Display the line chart for the stock's closing prices
+            st.write(f"### {symbol} Price Chart (1 Year)")
+            st.line_chart(stock_data['Close'])  # Line chart of closing prices
+        else:
+            st.write(f"### {symbol}: No data available for price chart.")
+    except Exception as e:
+        st.write(f"Error fetching data for {symbol}: {e}")
