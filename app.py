@@ -85,7 +85,7 @@ if selected_stocks:
         index=3  # Default to "1y" (1 year)
     )
 
-    # Display line charts only for the selected stocks/ETFs
+    # Dynamically add the charts for each selected stock at the bottom
     st.write(f"### Stock Price Trends for {time_period} Period")
     for symbol in selected_stocks:
         stock = yf.Ticker(symbol)
