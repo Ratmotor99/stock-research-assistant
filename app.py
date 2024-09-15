@@ -1,53 +1,92 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import datetime
 
-# Set the page title
-st.title("Top Dividend Stock Selector (Testing with 10 Stocks)")
+# Set page title
+st.title("Enhanced Dividend Stock Selector")
 
-# Step 1: Define a list of 10 dividend-paying stocks for testing
+# Step 1: Define 10 dividend-paying stocks for testing
 dividend_stocks = ['AAPL', 'MSFT', 'KO', 'PEP', 'T', 'VZ', 'JNJ', 'PG', 'XOM', 'CVX']
+etfs = ['SPY', 'IVV', 'VOO', 'QQQ', 'DIA']
 
-# Step 2: Input for selecting the number of top dividend stocks to display
-num_top_stocks = st.number_input("How many top dividend stocks to display?", min_value=1, max_value=10, value=5)
+# Step 2: Add checkboxes for showing dividend stocks and ETFs
+show_dividend_stocks = st.checkbox("Show Dividend Stocks", value=True)
+show_etfs = st.checkbox("Show ETFs", value=False)
 
-# Step 3: Fetch stock data for the predefined list of dividend stocks
+# Step 3: Create stock list based on user selection
+stock_list = []
+if show_dividend_stocks:
+    stock_list.extend(dividend_stocks)
+if show_etfs:
+    stock_list.extend(etfs)
+
+# Step 4: Input for total investment amount
+investment_amount = st.number_input("Enter the amount you want to invest ($)", min_value=100.0, value=1000.0)
+
+# Fetch stock data for the selected stocks
 stock_data_list = []
 
-for symbol in dividend_stocks:
+for symbol in stock_list:
     stock = yf.Ticker(symbol)
     info = stock.info
 
-    # Only include stocks with non-zero dividend yield
-    dividend_yield = info.get('dividendYield', 0)
+    # Calculate if the stock is up or down today (for color coding)
+    current_price = info.get('regularMarketPrice', 0)
+    previous_close = info.get('regularMarketPreviousClose', 0)
+    price_up = current_price > previous_close  # True if price is up, False if down
 
-    if dividend_yield:  # If dividend yield exists
-        # Add stock data to the list
+    # Calculate the number of years the company has been paying dividends
+    dividend_rate = info.get('dividendRate', 0)
+    dividend_yield = info.get('dividendYield', 0)
+    
+    if dividend_rate > 0:
+        dividend_start_date = info.get('firstTradeDateEpochUtc', None)
+        if dividend_start_date:
+            years_paying_dividends = (datetime.datetime.now() - datetime.datetime.fromtimestamp(dividend_start_date)).days // 365
+        else:
+            years_paying_dividends = 'N/A'
+    else:
+        years_paying_dividends = 'N/A'
+
+    # Only include dividend-paying stocks
+    if dividend_yield:
         stock_data = {
             'Symbol': symbol,
-            'Price': info.get('currentPrice', 'N/A'),
-            'Dividend Yield': dividend_yield,
-            'Dividend per Share': info.get('dividendRate', 'N/A')
+            'Price': f"${current_price:.2f}",
+            'Dividend Yield (%)': f"{dividend_yield * 100:.2f}%",
+            'Dividend per Share': f"${dividend_rate:.2f}" if dividend_rate else 'N/A',
+            'Years Paying Dividends': years_paying_dividends,
+            'Price Up': price_up,  # Track whether the price is up or down for color coding
         }
         stock_data_list.append(stock_data)
 
-# Convert to DataFrame
+# Convert stock data to a DataFrame
 stock_data_df = pd.DataFrame(stock_data_list)
 
-# Sort by dividend yield (highest to lowest)
-sorted_stocks = stock_data_df.sort_values(by='Dividend Yield', ascending=False)
+# Step 5: Sort by dividend yield (highest to lowest)
+sorted_stocks = stock_data_df.sort_values(by='Dividend Yield (%)', ascending=False)
 
-# Step 4: Display the top N dividend stocks as specified by the user
-top_stocks = sorted_stocks.head(num_top_stocks)
+# Step 6: Calculate the number of shares to buy for each stock based on the investment amount
+if not sorted_stocks.empty:
+    sorted_stocks['Shares to Buy'] = sorted_stocks['Price'].apply(lambda x: int(investment_amount / float(x.strip('$'))))
 
-st.write(f"### Top {num_top_stocks} Dividend Stocks")
-st.dataframe(top_stocks[['Symbol', 'Price', 'Dividend Yield', 'Dividend per Share']])
+# Step 7: Display the stock data in an autosized table
+st.write(f"### Top Dividend Stocks (Showing {len(stock_list)} stocks)")
+st.dataframe(sorted_stocks)
 
-# Step 5: Display the chart for each selected stock
-for index, row in top_stocks.iterrows():
+# Step 8: Display the chart for each selected stock
+for index, row in sorted_stocks.iterrows():
     symbol = row['Symbol']
     stock = yf.Ticker(symbol)
     stock_data = stock.history(period='1y')
 
+    # Show stock price chart
     st.write(f"### {symbol} Price Chart")
     st.line_chart(stock_data['Close'])
+
+    # Step 9: Apply color to the price box (green if price is up, red if down)
+    if row['Price Up']:
+        st.markdown(f"<span style='color:green'>Price: {row['Price']}</span>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<span style='color:red'>Price: {row['Price']}</span>", unsafe_allow_html=True)
