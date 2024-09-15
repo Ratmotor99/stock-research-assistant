@@ -37,14 +37,11 @@ else:
     # Otherwise, show only the first 10 stocks
     stock_list = initial_stocks
 
-# Let users input symbols (comma-separated) and choose from the list
-symbols = st.multiselect("Select stocks/ETFs to display", options=stock_list, default=initial_stocks)
-
 # Create an empty list to hold stock data
 stock_data_list = []
 
 # Fetch data for each selected stock symbol
-for symbol in symbols:
+for symbol in stock_list:
     stock = yf.Ticker(symbol)
     info = stock.info
     
@@ -72,20 +69,28 @@ stock_data_df = pd.DataFrame(stock_data_list)
 st.write("### Stock Data")
 st.dataframe(stock_data_df, width=1200)
 
-# Add a checkbox to show or hide the stock charts
-show_charts = st.checkbox("Show charts for selected stocks/ETFs", value=False)
+# Create a checkbox for each stock to select it for displaying the chart
+st.write("### Select Stocks for Chart Display")
+selected_stocks = []
+for symbol in stock_list:
+    # Add a checkbox for each stock symbol
+    if st.checkbox(f"Select {symbol} for chart"):
+        selected_stocks.append(symbol)
 
-# Create a selectbox for the time range of the charts
-time_period = st.selectbox(
-    "Select time range for stock price charts",
-    options=["1mo", "3mo", "6mo", "1y", "5y", "max"],
-    index=3  # Default to "1y" (1 year)
-)
+# If no stocks are selected, show a message
+if not selected_stocks:
+    st.write("No stocks selected for chart display.")
+else:
+    # Create a selectbox for the time range of the charts
+    time_period = st.selectbox(
+        "Select time range for stock price charts",
+        options=["1mo", "3mo", "6mo", "1y", "5y", "max"],
+        index=3  # Default to "1y" (1 year)
+    )
 
-# Display line charts only for the selected stocks/ETFs if checkbox is checked
-if show_charts:
+    # Display line charts only for the selected stocks/ETFs
     st.write(f"### Stock Price Trends for {time_period} Period")
-    for symbol in symbols:
+    for symbol in selected_stocks:
         stock = yf.Ticker(symbol)
         
         # Error handling: Check if stock data is available
@@ -99,4 +104,3 @@ if show_charts:
                 st.write(f"### {symbol}: No data available for price chart.")
         except Exception as e:
             st.write(f"Error fetching data for {symbol}: {e}")
-
