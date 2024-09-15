@@ -3,6 +3,9 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 
+# Set page layout to wide to make more room for the table
+st.set_page_config(layout="wide")
+
 # Set up the Streamlit app title
 st.title("Stock Research Assistant")
 
@@ -40,9 +43,9 @@ for symbol in stock_list:
 # Convert the list of dictionaries into a DataFrame
 stock_data_df = pd.DataFrame(stock_data_list)
 
-# Display the stock data as a table in Streamlit
+# Display the stock data as a wider table
 st.write("### Stock Data")
-st.dataframe(stock_data_df)
+st.dataframe(stock_data_df, width=1200)  # Adjust the width to make the table wider
 
 # Create a multiselect box to let users choose which stocks they want to display charts for
 selected_stocks = st.multiselect(
