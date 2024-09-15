@@ -20,14 +20,17 @@ for symbol in stock_list:
     stock = yf.Ticker(symbol)
     info = stock.info
     
-    # Debugging: Print raw stock data to identify the fields
-    st.write(f"Raw data for {symbol}:")
-    st.write(info)  # This will display all the raw data fetched from yFinance
+    # Debugging: Print raw stock data to identify the fields (optional)
+    # st.write(f"Raw data for {symbol}:")
+    # st.write(info)  # Uncomment this if you need to see the raw data
+    
+    # Use 'currentPrice' as the stock price field
+    price = info.get('currentPrice', np.nan)  # Fallback to np.nan if 'currentPrice' is not available
     
     # Store relevant data: Stock symbol, price, dividend yield, dividend per share, market cap, P/E ratio, 52-week high/low
     stock_data = {
         'Symbol': symbol,
-        'Price': info.get('regularMarketPrice', np.nan),  # Convert 'N/A' to np.nan for proper numerical handling
+        'Price': price,
         'Dividend Yield': info.get('dividendYield', np.nan),
         'Dividend per Share': info.get('dividendRate', np.nan),
         'Market Cap': info.get('marketCap', np.nan),
