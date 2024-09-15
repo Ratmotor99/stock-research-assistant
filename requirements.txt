@@ -1,3 +1,4 @@
+streamlit-aggrid
 yfinance
 pandas
-streamlit-aggrid
+numpy
