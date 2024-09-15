@@ -43,10 +43,10 @@ st.write("### Stock Data Table (Click to select a stock)")
 grid_response = AgGrid(stock_data_df, gridOptions=grid_options)
 
 # Get the selected row from the table
-selected_row = grid_response['selected_rows']
+selected_row = grid_response['selected_rows'] if grid_response else None
 
-# Check if any row is selected
-if len(selected_row) > 0:
+# Check if any row is selected and handle NoneType
+if selected_row and len(selected_row) > 0:
     selected_symbol = selected_row[0]['Symbol']
     
     # Fetch and display the chart for the selected stock
