@@ -22,11 +22,15 @@ for symbol in stock_list:
     
     # Store relevant data: Stock symbol, price, dividend yield, dividend per share
     stock_data = {
-        'Symbol': symbol,
-        'Price': info.get('regularMarketPrice', 'N/A'),
-        'Dividend Yield': info.get('dividendYield', 'N/A'),
-        'Dividend per Share': info.get('dividendRate', 'N/A')
-    }
+    'Symbol': symbol,
+    'Price': info.get('regularMarketPrice', 'N/A'),
+    'Dividend Yield': info.get('dividendYield', 'N/A'),
+    'Dividend per Share': info.get('dividendRate', 'N/A'),
+    'Market Cap': info.get('marketCap', 'N/A'),
+    'P/E Ratio': info.get('trailingPE', 'N/A'),
+    '52-Week High': info.get('fiftyTwoWeekHigh', 'N/A'),
+    '52-Week Low': info.get('fiftyTwoWeekLow', 'N/A')
+}
     
     stock_data_list.append(stock_data)
 
