@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import numpy as np
 
 # Set up the Streamlit app title
 st.title("Stock Research Assistant")
@@ -22,13 +23,13 @@ for symbol in stock_list:
     # Store relevant data: Stock symbol, price, dividend yield, dividend per share, market cap, P/E ratio, 52-week high/low
     stock_data = {
         'Symbol': symbol,
-        'Price': info.get('regularMarketPrice', 'N/A'),
-        'Dividend Yield': info.get('dividendYield', 'N/A'),
-        'Dividend per Share': info.get('dividendRate', 'N/A'),
-        'Market Cap': info.get('marketCap', 'N/A'),
-        'P/E Ratio': info.get('trailingPE', 'N/A'),
-        '52-Week High': info.get('fiftyTwoWeekHigh', 'N/A'),
-        '52-Week Low': info.get('fiftyTwoWeekLow', 'N/A')
+        'Price': info.get('regularMarketPrice', np.nan),  # Convert 'N/A' to np.nan for proper numerical handling
+        'Dividend Yield': info.get('dividendYield', np.nan),
+        'Dividend per Share': info.get('dividendRate', np.nan),
+        'Market Cap': info.get('marketCap', np.nan),
+        'P/E Ratio': info.get('trailingPE', np.nan),
+        '52-Week High': info.get('fiftyTwoWeekHigh', np.nan),
+        '52-Week Low': info.get('fiftyTwoWeekLow', np.nan)
     }
     
     stock_data_list.append(stock_data)
