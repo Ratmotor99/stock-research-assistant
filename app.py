@@ -53,8 +53,8 @@ for symbol in stock_list:
     if dividend_yield:
         stock_data = {
             'Symbol': symbol,
-            'Price': f"${current_price:.2f}",
-            'Dividend Yield (%)': f"{dividend_yield * 100:.2f}%",
+            'Price': f"${current_price:.2f}" if current_price else 'N/A',
+            'Dividend Yield (%)': f"{dividend_yield * 100:.2f}%" if dividend_yield else 'N/A',
             'Dividend per Share': f"${dividend_rate:.2f}" if dividend_rate else 'N/A',
             'Years Paying Dividends': years_paying_dividends,
             'Price Up': price_up,  # Track whether the price is up or down for color coding
@@ -64,18 +64,24 @@ for symbol in stock_list:
 # Convert stock data to a DataFrame
 stock_data_df = pd.DataFrame(stock_data_list)
 
-# Step 5: Sort by dividend yield (highest to lowest)
+# Sort by dividend yield (highest to lowest)
 sorted_stocks = stock_data_df.sort_values(by='Dividend Yield (%)', ascending=False)
 
-# Step 6: Calculate the number of shares to buy for each stock based on the investment amount
-if not sorted_stocks.empty:
-    sorted_stocks['Shares to Buy'] = sorted_stocks['Price'].apply(lambda x: int(investment_amount / float(x.strip('$'))))
+# Step 5: Calculate the number of shares to buy for each stock based on the investment amount
+def calculate_shares(price):
+    try:
+        return int(investment_amount / float(price.strip('$')))
+    except (ValueError, ZeroDivisionError):
+        return 'N/A'  # Return 'N/A' if there's an issue with the price
 
-# Step 7: Display the stock data in an autosized table
+if not sorted_stocks.empty:
+    sorted_stocks['Shares to Buy'] = sorted_stocks['Price'].apply(lambda x: calculate_shares(x))
+
+# Step 6: Display the stock data in an autosized table
 st.write(f"### Top Dividend Stocks (Showing {len(stock_list)} stocks)")
 st.dataframe(sorted_stocks)
 
-# Step 8: Display the chart for each selected stock
+# Step 7: Display the chart for each selected stock
 for index, row in sorted_stocks.iterrows():
     symbol = row['Symbol']
     stock = yf.Ticker(symbol)
@@ -85,7 +91,7 @@ for index, row in sorted_stocks.iterrows():
     st.write(f"### {symbol} Price Chart")
     st.line_chart(stock_data['Close'])
 
-    # Step 9: Apply color to the price box (green if price is up, red if down)
+    # Step 8: Apply color to the price box (green if price is up, red if down)
     if row['Price Up']:
         st.markdown(f"<span style='color:green'>Price: {row['Price']}</span>", unsafe_allow_html=True)
     else:
