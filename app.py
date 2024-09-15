@@ -51,17 +51,24 @@ selected_stocks = st.multiselect(
     default=stock_list  # Pre-select all stocks initially
 )
 
+# Create a selectbox for the time range of the charts
+time_period = st.selectbox(
+    "Select time range for stock price charts",
+    options=["1mo", "3mo", "6mo", "1y", "5y", "max"],
+    index=3  # Default to "1y" (1 year)
+)
+
 # Display line charts only for the selected stocks
-st.write("### Stock Price Trends")
+st.write(f"### Stock Price Trends for {time_period} Period")
 for symbol in selected_stocks:
     stock = yf.Ticker(symbol)
     
     # Error handling: Check if stock data is available
     try:
-        stock_data = stock.history(period="1y")  # Fetch 1 year of data
+        stock_data = stock.history(period=time_period)  # Fetch data for the selected time period
         if not stock_data.empty:
             # Display the line chart for the stock's closing prices
-            st.write(f"### {symbol} Price Chart (1 Year)")
+            st.write(f"### {symbol} Price Chart ({time_period})")
             st.line_chart(stock_data['Close'])  # Line chart of closing prices
         else:
             st.write(f"### {symbol}: No data available for price chart.")
