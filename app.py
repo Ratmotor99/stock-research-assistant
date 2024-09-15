@@ -19,9 +19,10 @@ stock_data_list = []
 for symbol in stock_list:
     stock = yf.Ticker(symbol)
     info = stock.info
-st.write(f"Raw data for {symbol}:")
-st.write(info)  # This will display all the raw data fetched from yFinance
-
+    
+    # Debugging: Print raw stock data to identify the fields
+    st.write(f"Raw data for {symbol}:")
+    st.write(info)  # This will display all the raw data fetched from yFinance
     
     # Store relevant data: Stock symbol, price, dividend yield, dividend per share, market cap, P/E ratio, 52-week high/low
     stock_data = {
