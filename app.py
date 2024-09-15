@@ -45,7 +45,8 @@ grid_response = AgGrid(stock_data_df, gridOptions=grid_options)
 # Get the selected row from the table
 selected_row = grid_response['selected_rows']
 
-if selected_row:
+# Check if any row is selected
+if len(selected_row) > 0:
     selected_symbol = selected_row[0]['Symbol']
     
     # Fetch and display the chart for the selected stock
@@ -54,3 +55,5 @@ if selected_row:
     
     st.write(f"### {selected_symbol} Price Chart")
     st.line_chart(stock_data['Close'])
+else:
+    st.write("No stock selected.")
