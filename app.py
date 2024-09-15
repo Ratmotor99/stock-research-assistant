@@ -9,17 +9,42 @@ st.set_page_config(layout="wide")
 # Set up the Streamlit app title
 st.title("Stock Research Assistant")
 
-# User input for multiple stock symbols
-symbols = st.text_input("Enter stock symbols (comma-separated)", "AAPL, MSFT, KO, JNJ, PFE")
+# Fetch S&P 500 stock symbols from Wikipedia
+@st.cache  # Cache the result to avoid reloading on every run
+def get_sp500_stocks():
+    url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+    sp500_table = pd.read_html(url, header=0)[0]
+    return sp500_table['Symbol'].tolist()
 
-# Convert the input string into a list of stock symbols
-stock_list = [symbol.strip() for symbol in symbols.split(",")]
+sp500_stocks = get_sp500_stocks()
+
+# Predefined ETF symbols
+etfs = ['SPY', 'IVV', 'VOO', 'QQQ', 'DIA', 'IWM', 'XLF', 'XLK', 'VTI', 'AGG']
+
+# Combine S&P 500 stocks and ETFs into one list
+all_stocks = sp500_stocks + etfs
+
+# Show only the first 10 stocks initially
+initial_stocks = all_stocks[:10]
+
+# Add a checkbox to show all stocks and ETFs
+show_all = st.checkbox("Show all S&P 500 and ETF symbols")
+
+if show_all:
+    # If checkbox is selected, show all stocks and ETFs
+    stock_list = all_stocks
+else:
+    # Otherwise, show only the first 10 stocks
+    stock_list = initial_stocks
+
+# Let users input symbols (comma-separated) and choose from the list
+symbols = st.multiselect("Select stocks/ETFs to display charts", options=stock_list, default=initial_stocks)
 
 # Create an empty list to hold stock data
 stock_data_list = []
 
-# Fetch data for each stock symbol
-for symbol in stock_list:
+# Fetch data for each selected stock symbol
+for symbol in symbols:
     stock = yf.Ticker(symbol)
     info = stock.info
     
@@ -45,14 +70,7 @@ stock_data_df = pd.DataFrame(stock_data_list)
 
 # Display the stock data as a wider table
 st.write("### Stock Data")
-st.dataframe(stock_data_df, width=1200)  # Adjust the width to make the table wider
-
-# Create a multiselect box to let users choose which stocks they want to display charts for
-selected_stocks = st.multiselect(
-    "Select stocks to display charts",
-    options=stock_list,
-    default=stock_list  # Pre-select all stocks initially
-)
+st.dataframe(stock_data_df, width=1200)
 
 # Create a selectbox for the time range of the charts
 time_period = st.selectbox(
@@ -61,9 +79,9 @@ time_period = st.selectbox(
     index=3  # Default to "1y" (1 year)
 )
 
-# Display line charts only for the selected stocks
+# Display line charts only for the selected stocks/ETFs
 st.write(f"### Stock Price Trends for {time_period} Period")
-for symbol in selected_stocks:
+for symbol in symbols:
     stock = yf.Ticker(symbol)
     
     # Error handling: Check if stock data is available
